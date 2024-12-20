@@ -12,9 +12,11 @@ type Request struct {
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request) {
-	var reqBody Request
+	var rawData map[string]interface{}
+
+	// Декодируем в map для проверки типа полей
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&reqBody); err != nil {
+	if err := decoder.Decode(&rawData); err != nil {
 		response := utils.Response{
 			Status:  "fail",
 			Message: "Invalid JSON format",
@@ -22,15 +24,20 @@ func HandlePost(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithJSON(w, http.StatusBadRequest, response)
 		return
 	}
-	if reqBody.Message == "" {
+
+	// Проверяем, что поле Message существует и имеет тип string
+	message, ok := rawData["message"].(string)
+	if !ok || message == "" {
 		response := utils.Response{
 			Status:  "fail",
-			Message: "Invalid JSON message",
+			Message: "`json:'message'` field is required and must be a string",
 		}
 		utils.RespondWithJSON(w, http.StatusBadRequest, response)
 		return
 	}
-	fmt.Printf("Received message: %s\n", reqBody.Message)
+
+	// Обрабатываем сообщение, если всё корректно
+	fmt.Printf("Received message: %s\n", message)
 	response := utils.Response{
 		Status:  "success",
 		Message: "Data successfully received",
