@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Management</h1>
+
+    <h3>Create User</h3>
+    <form id="create-form">
+        Name: <input type="text" id="create-name" required><br>
+        Email: <input type="email" id="create-email" required><br>
+        <button type="submit">Create</button>
+    </form>
+
+    <h3>Get User by ID</h3>
+    <form id="get-form">
+        User ID: <input type="number" id="get-id" required><br>
+        <button type="submit">Get</button>
+    </form>
+
+    <h3>Update User</h3>
+    <form id="update-form">
+        User ID: <input type="number" id="update-id" required><br>
+        Name: <input type="text" id="update-name" required><br>
+        Email: <input type="email" id="update-email" required><br>
+        <button type="submit">Update</button>
+    </form>
+
+    <h3>Delete User</h3>
+    <form id="delete-form">
+        User ID: <input type="number" id="delete-id" required><br>
+        <button type="submit">Delete</button>
+    </form>
+
+    <h3>All Users</h3>
+    <button id="get-all">Get All Users</button>
+    <br><br>
+
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Users will be populated here -->
+        </tbody>
+    </table>
+
+    <div id="error-popup" style="display:none; padding:10px; background-color:red; color:white;">
+        <span id="error-message"></span>
+    </div>
+
+    <script>
+        // Utility function to handle errors
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-popup').style.display = 'block';
+        }
+
+        // Create User
+        document.getElementById('create-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('create-name').value;
+            const email = document.getElementById('create-email').value;
+
+            fetch('/user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`Error: ${response.status}`);
+                alert("User created!");
+            })
+            .catch(error => showError(error.message));
+        });
+
+        // Get User by ID
+        document.getElementById('get-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('get-id').value;
+
+            fetch(`/user/${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data) throw new Error("User not found.");
+                    alert(`User: ${data.name}, ${data.email}`);
+                })
+                .catch(error => showError(error.message));
+        });
+
+        // Update User by ID
+        document.getElementById('update-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('update-id').value;
+            const name = document.getElementById('update-name').value;
+            const email = document.getElementById('update-email').value;
+
+            fetch(`/user/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`Error: ${response.status}`);
+                alert("User updated!");
+            })
+            .catch(error => showError(error.message));
+        });
+
+        // Delete User by ID
+        document.getElementById('delete-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('delete-id').value;
+
+            fetch(`/user/${id}`, { method: 'DELETE' })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Error: ${response.status}`);
+                    alert("User deleted!");
+                })
+                .catch(error => showError(error.message));
+        });
+
+        // Get All Users
+        document.getElementById('get-all').addEventListener('click', function() {
+            fetch('/users')
+                .then(response => response.json())
+                .then(users => {
+                    const tableBody = document.getElementById('users-table').getElementsByTagName('tbody')[0];
+                    tableBody.innerHTML = '';  // Clear previous data
+                    users.forEach(user => {
+                        const row = tableBody.insertRow();
+                        row.insertCell(0).textContent = user.id;
+                        row.insertCell(1).textContent = user.name;
+                        row.insertCell(2).textContent = user.email;
+                    });
+                })
+                .catch(error => showError(error.message));
+        });
+    </script>
+</body>
+</html>
